@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 
 var tuna = require('./controller.js');
+var ehr = require('./EHRcontroller.js');
 
 module.exports = function(app){
 
@@ -16,4 +17,31 @@ module.exports = function(app){
   app.get('/change_holder/:holder', function(req, res){
     tuna.change_holder(req, res);
   });
+
+  app.get('/test',function(req,res){
+    res.json({ username: 'Ayman' })
+  })
+
+////////////////////////////////////////////////////////////////
+
+  app.get('/check_user/:id', function(req, res){
+    ehr.check_user(req, res);
+  });
+
+  app.get('/req_access/:idMedecin/:idPatient', function(req, res){
+    ehr.req_access(req, res);
+  });
+
+  app.get('/get_all_access/:id', function(req, res){
+    ehr.get_all_access(req, res);
+  });
+
+  app.get('/get_perm/:idM/:idP', function(req, res){
+    ehr.get_perm(req, res);
+  });
+
+  app.get('/get_all', function(req, res){
+    ehr.get_all(req, res);
+  });
+
 }

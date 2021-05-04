@@ -1,23 +1,11 @@
-// SPDX-License-Identifier: Apache-2.0
-
-/*
-  Sample Chaincode based on Demonstrated Scenario
-
- This code is based on code written by the Hyperledger Fabric community.
-  Original code can be found here: https://github.com/hyperledger/fabric-samples/blob/release/chaincode/fabcar/fabcar.go
- */
 
 package main
 
-/* Imports  
-* 4 utility libraries for handling bytes, reading and writing JSON, 
-formatting, and string manipulation  
-* 2 specific Hyperledger Fabric specific libraries for Smart Contracts  
-*/ 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"time"
 	"strconv"
 
 	"github.com/hyperledger/fabric/core/chaincode/shim"
@@ -28,9 +16,6 @@ import (
 type SmartContract struct {
 }
 
-/* Define Tuna structure, with 4 properties.  
-Structure tags are used by encoding/json library
-*/
 type Tuna struct {
 	Vessel string `json:"vessel"`
 	Timestamp string `json:"timestamp"`
@@ -38,12 +23,47 @@ type Tuna struct {
 	Holder  string `json:"holder"`
 }
 
-/*
- * The Init method *
- called when the Smart Contract "tuna-chaincode" is instantiated by the network
- * Best practice is to have any Ledger initialization in separate function 
- -- see initLedger()
- */
+type Medecin struct {
+	NomPrenom string `json:"nomprenom"`
+	DateNaissance string `json:"datenaissance"`
+	Specialite  string `json:"specialite"`
+	Grade  string `json:"grade"`
+	Cin  string `json:"cin"`
+}
+
+type Patient struct {
+	NomPrenom string `json:"nomprenom"`
+	DateNaissance string `json:"datenaissance"`
+	Cin  string `json:"cin"`
+}
+
+type Receptionniste struct {
+	NomPrenom string `json:"nomprenom"`
+	DateNaissance string `json:"datenaissance"`
+	Cin  string `json:"cin"`
+	Hopital  string `json:"hopital"`
+}
+
+type AgentLab struct {
+	NomPrenom string `json:"nomprenom"`
+	DateNaissance string `json:"datenaissance"`
+	Cin  string `json:"cin"`
+	Laboratoire  string `json:"laboratoire"`
+}
+
+type Dossier struct {
+	NumDossier string `json:"numdossier"`
+	CinPatient string `json:"cinpatient"`
+}
+
+type Permission struct {
+	CinMedecin string `json:"cinmedecin"`
+	CinPatient string `json:"cinpatient"`
+	Debautorisation string `json:"debautorisation"`
+	Finautorisation string `json:"finautorisation"`
+	Autorise bool `json:"autorise"`
+}
+
 func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
 	return shim.Success(nil)
 }
@@ -58,20 +78,299 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 	// Retrieve the requested Smart Contract function and arguments
 	function, args := APIstub.GetFunctionAndParameters()
 	// Route to the appropriate handler function to interact with the ledger
-	if function == "queryTuna" {
-		return s.queryTuna(APIstub, args)
-	} else if function == "initLedger" {
+	if function == "initLedger" {
 		return s.initLedger(APIstub)
-	} else if function == "recordTuna" {
-		return s.recordTuna(APIstub, args)
-	} else if function == "queryAllTuna" {
-		return s.queryAllTuna(APIstub)
-	} else if function == "changeTunaHolder" {
-		return s.changeTunaHolder(APIstub, args)
+	} 
+
+	if function == "checkUser" {
+		return s.checkUser(APIstub, args)
+	} 
+
+	if function == "req_access" {
+		return s.req_access(APIstub, args)
+	} 
+
+	if function == "fetch_access" {
+		return s.fetch_access(APIstub, args)
+	} 
+
+	if function == "fetch_perm" {
+		return s.fetch_perm(APIstub, args)
+	} 
+
+	if function == "queryAllPatient" {
+		return s.queryAllPatient(APIstub)
+	} 
+	/*
+	if function == "queryPatient" {
+		return s.queryPatient(APIstub, args)
+	} 
+	if function == "recordPatient" {
+		return s.recordPatient(APIstub, args)
+	}
+	if function == "queryAllPatient" {
+		return s.queryAllPatient(APIstub)
+	} 
+	if function == "updateDossierMedical" {
+		return s.updateDossierMedical(APIstub, args)
+	}*/
+	// query medecin query agent lab record medecin record agent lab .....
+
+	return shim.Error(function)
+}
+
+/* Check User */
+func (s *SmartContract) checkUser(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
 	}
 
-	return shim.Error("Invalid Smart Contract function name.")
+	userAsBytes, _ := APIstub.GetState(args[0])
+	if userAsBytes == nil {
+		return shim.Error("User not found.")
+	}
+	return shim.Success(userAsBytes)
 }
+
+/* InitLegdger */
+
+func (s *SmartContract) initLedger(APIstub shim.ChaincodeStubInterface) sc.Response {
+	patient := []Patient{
+		Patient{NomPrenom: "Ayman Belhadj", DateNaissance: "05/05/1997", Cin: "11071155"},
+		Patient{NomPrenom: "Nour Mziou", DateNaissance: "01/01/1998", Cin: "87654321"},
+	}
+
+	medecin := []Medecin{
+		Medecin{NomPrenom: "MedAmin Hentati", DateNaissance: "30apr", Specialite: "Radiologie", Grade: "1", Cin: "12345678"},
+	}
+
+	i := 0
+	for i < len(patient) {
+		patientAsBytes, _ := json.Marshal(patient[i])
+		APIstub.PutState("P-"+patient[i].Cin, patientAsBytes)
+		fmt.Println("Added", patient[i])
+		i = i + 1
+	}
+
+	j := 0
+	for j < len(medecin) {
+		medecinAsBytes, _ := json.Marshal(medecin[j])
+		APIstub.PutState("M-"+medecin[j].Cin, medecinAsBytes)
+		fmt.Println("Added", medecin[j])
+		j = j + 1
+	}
+
+	return shim.Success(nil)
+}
+
+
+/* Request Access */
+
+func (s *SmartContract) req_access(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) != 5 {
+		return shim.Error("Incorrect number of arguments. Expecting 5")
+	}
+
+	var perm = Permission{ CinMedecin: args[0], CinPatient: args[1], Debautorisation: args[2], Finautorisation: args[3], Autorise: false }
+	indexName := "med-pat"
+	Key, err := APIstub.CreateCompositeKey(indexName, []string{args[0], args[1]})
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	permAsBytes, _ := json.Marshal(perm)
+	APIstub.PutState(Key, permAsBytes)
+	//APIstub.PutState(args[0]+"-"+args[1], permAsBytes)
+
+	return shim.Success(nil)
+}
+
+/* Fetch access */
+
+func (s *SmartContract) fetch_access(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) != 1 {
+		return shim.Error("Incorrect number of arguments. Expecting 1")
+	}
+
+	permResultsIterator, err := APIstub.GetStateByPartialCompositeKey("med-pat", []string{args[0]})
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	defer permResultsIterator.Close()
+
+	// Iterate through result set and for each marble found, transfer to newOwner
+	var i int
+
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+
+	bArrayMemberAlreadyWritten := false
+
+	for i = 0; permResultsIterator.HasNext(); i++ {
+		// Note that we don't get the value (2nd return variable), we'll just get the marble name from the composite key
+		responseRange, err := permResultsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+
+		// get the color and name from color~name composite key
+		objectType, compositeKeyParts, err := APIstub.SplitCompositeKey(responseRange.Key)
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		
+		idMedecin := compositeKeyParts[0]
+		idPatient := compositeKeyParts[1]
+
+		fmt.Printf("- found a marble from index:%s color:%s name:%s\n", objectType, idMedecin, idPatient)
+
+
+		buffer.WriteString("{\"Key\":")
+		buffer.WriteString("\"")
+		str := string(responseRange.Value)
+		res := Permission{}
+		json.Unmarshal([]byte(str), &res)
+		now := time.Now()
+		msec := now.UnixNano() / int64(time.Millisecond)
+		s := strconv.FormatInt(msec, 10)
+		buffer.WriteString(idMedecin + "-" + idPatient + "-"+ res.Debautorisation+ "-"+ s)
+		buffer.WriteString("\"")
+
+		//buffer.WriteString(", \"Record\":")
+		// Record is a JSON object, so we write as-is
+		//buffer.WriteString(string(queryResponse.Value))
+		
+		buffer.WriteString("}")
+		bArrayMemberAlreadyWritten = true
+	}
+
+	buffer.WriteString("]")
+
+	fmt.Printf("- queryAll:\n%s\n", buffer.String())
+
+	return shim.Success(buffer.Bytes())
+}
+
+/* Fetch Permission */
+
+func (s *SmartContract) fetch_perm(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+
+	if len(args) != 2 {
+		return shim.Error("Incorrect number of arguments. Expecting 2")
+	}
+
+	indexName := "med-pat"
+	Key, err := APIstub.CreateCompositeKey(indexName, []string{args[0], args[1]})
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	permAsBytes, _ := APIstub.GetState(Key)
+	if permAsBytes == nil {
+		return shim.Error("Permission not found.")
+	}
+	return shim.Success(permAsBytes)
+}
+
+/* Query All Patient */
+
+func (s *SmartContract) queryAllPatient(APIstub shim.ChaincodeStubInterface) sc.Response {
+
+	startKey := "P-"
+	endKey := ""
+
+	resultsIterator, err := APIstub.GetStateByRange(startKey, endKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer resultsIterator.Close()
+
+	// buffer is a JSON array containing QueryResults
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+
+	bArrayMemberAlreadyWritten := false
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		// Add comma before array members,suppress it for the first array member
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+		buffer.WriteString("{\"Key\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(queryResponse.Key)
+		buffer.WriteString("\"")
+
+		buffer.WriteString(", \"Record\":")
+		// Record is a JSON object, so we write as-is
+		buffer.WriteString(string(queryResponse.Value))
+		buffer.WriteString("}")
+		bArrayMemberAlreadyWritten = true
+	}
+	buffer.WriteString("]")
+
+	fmt.Printf("- queryAll:\n%s\n", buffer.String())
+
+	return shim.Success(buffer.Bytes())
+}
+
+/* Query All Medecin */
+
+func (s *SmartContract) queryAllMedecin(APIstub shim.ChaincodeStubInterface) sc.Response {
+
+	startKey := "M-"
+	endKey := ""
+
+	resultsIterator, err := APIstub.GetStateByRange(startKey, endKey)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+	defer resultsIterator.Close()
+
+	// buffer is a JSON array containing QueryResults
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+
+	bArrayMemberAlreadyWritten := false
+	for resultsIterator.HasNext() {
+		queryResponse, err := resultsIterator.Next()
+		if err != nil {
+			return shim.Error(err.Error())
+		}
+		// Add comma before array members,suppress it for the first array member
+		if bArrayMemberAlreadyWritten == true {
+			buffer.WriteString(",")
+		}
+		buffer.WriteString("{\"Key\":")
+		buffer.WriteString("\"")
+		buffer.WriteString(queryResponse.Key)
+		buffer.WriteString("\"")
+
+		buffer.WriteString(", \"Record\":")
+		// Record is a JSON object, so we write as-is
+		buffer.WriteString(string(queryResponse.Value))
+		buffer.WriteString("}")
+		bArrayMemberAlreadyWritten = true
+	}
+	buffer.WriteString("]")
+
+	fmt.Printf("- queryAll:\n%s\n", buffer.String())
+
+	return shim.Success(buffer.Bytes())
+}
+
+
+
+/////////////////////////////////////////////////////////
 
 /*
  * The queryTuna method *
@@ -93,33 +392,8 @@ func (s *SmartContract) queryTuna(APIstub shim.ChaincodeStubInterface, args []st
 
 /*
  * The initLedger method *
-Will add test data (10 tuna catches)to our network
  */
-func (s *SmartContract) initLedger(APIstub shim.ChaincodeStubInterface) sc.Response {
-	tuna := []Tuna{
-		Tuna{Vessel: "923F", Location: "67.0006, -70.5476", Timestamp: "1504054225", Holder: "Miriam"},
-		Tuna{Vessel: "M83T", Location: "91.2395, -49.4594", Timestamp: "1504057825", Holder: "Dave"},
-		Tuna{Vessel: "T012", Location: "58.0148, 59.01391", Timestamp: "1493517025", Holder: "Igor"},
-		Tuna{Vessel: "P490", Location: "-45.0945, 0.7949", Timestamp: "1496105425", Holder: "Amalea"},
-		Tuna{Vessel: "S439", Location: "-107.6043, 19.5003", Timestamp: "1493512301", Holder: "Rafa"},
-		Tuna{Vessel: "J205", Location: "-155.2304, -15.8723", Timestamp: "1494117101", Holder: "Shen"},
-		Tuna{Vessel: "S22L", Location: "103.8842, 22.1277", Timestamp: "1496104301", Holder: "Leila"},
-		Tuna{Vessel: "EI89", Location: "-132.3207, -34.0983", Timestamp: "1485066691", Holder: "Yuan"},
-		Tuna{Vessel: "129R", Location: "153.0054, 12.6429", Timestamp: "1485153091", Holder: "Carlo"},
-		Tuna{Vessel: "49W4", Location: "51.9435, 8.2735", Timestamp: "1487745091", Holder: "Fatima"},
-	}
 
-	i := 0
-	for i < len(tuna) {
-		fmt.Println("i is ", i)
-		tunaAsBytes, _ := json.Marshal(tuna[i])
-		APIstub.PutState(strconv.Itoa(i+1), tunaAsBytes)
-		fmt.Println("Added", tuna[i])
-		i = i + 1
-	}
-
-	return shim.Success(nil)
-}
 
 /*
  * The recordTuna method *
