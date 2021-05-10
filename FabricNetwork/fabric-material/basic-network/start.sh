@@ -26,7 +26,6 @@ docker exec -e "CORE_PEER_LOCALMSPID=Org1MSP" -e "CORE_PEER_MSPCONFIGPATH=/etc/h
 docker exec -e "CORE_PEER_LOCALMSPID=Org1MSP" -e "CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/msp/users/Admin@org1.example.com/msp" peer0.org1.example.com peer channel join -b mychannel.block
 
 # Join peer0.org2.example.com to the channel
-
 docker cp peer0.org1.example.com:/opt/gopath/src/github.com/hyperledger/fabric/mychannel.block mychannel.block
 
 docker cp mychannel.block peer0.org2.example.com:/opt/gopath/src/github.com/hyperledger/fabric/

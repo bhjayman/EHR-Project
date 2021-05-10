@@ -1,31 +1,11 @@
 //SPDX-License-Identifier: Apache-2.0
 
-var tuna = require('./controller.js');
 var ehr = require('./EHRcontroller.js');
 
 module.exports = function(app){
 
-  app.get('/get_tuna/:id', function(req, res){
-    tuna.get_tuna(req, res);
-  });
-  app.get('/add_tuna/:tuna', function(req, res){
-    tuna.add_tuna(req, res);
-  });
-  app.get('/get_all_tuna', function(req, res){
-    tuna.get_all_tuna(req, res);
-  });
-  app.get('/change_holder/:holder', function(req, res){
-    tuna.change_holder(req, res);
-  });
-
-  app.get('/test',function(req,res){
-    res.json({ username: 'Ayman' })
-  })
-
-////////////////////////////////////////////////////////////////
-
-  app.get('/check_user/:id', function(req, res){
-    ehr.check_user(req, res);
+  app.get('/get_data/:id', function(req, res){
+    ehr.get_data(req, res);
   });
 
   app.get('/req_access/:idMedecin/:idPatient', function(req, res){
@@ -36,12 +16,40 @@ module.exports = function(app){
     ehr.get_all_access(req, res);
   });
 
+  app.get('/get_all_pat_access/:idP/:idM/:type', function(req, res){
+    ehr.get_all_pat_access(req, res);
+  });
+
   app.get('/get_perm/:idM/:idP', function(req, res){
     ehr.get_perm(req, res);
   });
 
   app.get('/get_all', function(req, res){
     ehr.get_all(req, res);
+  });
+
+  app.get('/edit_perm/:idP/:idM/:dateAut/:statut', function(req, res){
+    ehr.edit_perm(req, res);
+  });
+
+  app.get('/get_dossier/:idM/:idP/:dateAut/:mode', function(req, res){
+    ehr.get_dossier(req, res);
+  });
+
+  app.get('/add_to_dossier/:id/:data', function(req, res){
+    ehr.add_to_dossier(req, res);
+  });
+
+  app.get('/add_medecin/:id/:nomp/:sp', function(req, res){
+    ehr.add_medecin(req, res);
+  });
+
+  app.get('/add_patient/:id/:nomp/:dn', function(req, res){
+    ehr.add_patient(req, res);
+  });
+
+  app.get('/add_agent/:id/:nomp/:lab', function(req, res){
+    ehr.add_agent(req, res);
   });
 
 }
